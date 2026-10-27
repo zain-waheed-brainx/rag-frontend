@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageItem } from '@/features/chat/components/MessageItem'
 import { useChat } from '@/features/chat/hooks/useChat'
+import { useSpeechRecognition } from '@/features/chat/hooks/useSpeechRecognition'
 
 interface ChatDocument {
   documentId: string
@@ -20,6 +21,17 @@ export function ChatWindow({ documents, documentsLoading }: ChatWindowProps) {
   const [documentId, setDocumentId] = useState('')
   const [noDocumentsError, setNoDocumentsError] = useState(false)
   const bottomRef = useRef<HTMLLIElement>(null)
+
+  const appendTranscript = useCallback((text: string) => {
+    if (!text) return
+    setInput((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${text}`.slice(0, MAX_QUESTION_LENGTH))
+  }, [])
+  const voice = useSpeechRecognition(appendTranscript)
+  const abortVoice = voice.abort
+
+  useEffect(() => {
+    if (isSending) abortVoice()
+  }, [isSending, abortVoice])
 
   useEffect(() => {
     if (typeof bottomRef.current?.scrollIntoView === 'function') {
@@ -42,6 +54,7 @@ export function ChatWindow({ documents, documentsLoading }: ChatWindowProps) {
       return
     }
     setNoDocumentsError(false)
+    voice.abort()
     send(trimmed, selectedDocumentId || undefined)
     setInput('')
   }
@@ -91,6 +104,11 @@ export function ChatWindow({ documents, documentsLoading }: ChatWindowProps) {
           {error.message}
         </p>
       )}
+      {voice.error && (
+        <p role="alert" className="chat-alert">
+          {voice.error}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="chat-form">
         <label className="scope-select">
           <span>Search in</span>
@@ -113,10 +131,27 @@ export function ChatWindow({ documents, documentsLoading }: ChatWindowProps) {
           placeholder="Ask a question… (Enter to send, Shift+Enter for a new line)"
           disabled={isSending}
         />
+        {voice.isListening && voice.interim && (
+          <p className="voice-interim" aria-hidden="true">
+            {voice.interim}
+          </p>
+        )}
         <div className="chat-form-footer">
           <span className="char-counter">
             {input.length}/{MAX_QUESTION_LENGTH}
           </span>
+          {voice.isSupported && (
+            <button
+              type="button"
+              className={`btn btn-secondary voice-btn${voice.isListening ? ' listening' : ''}`}
+              onClick={voice.isListening ? voice.stop : voice.start}
+              disabled={isSending}
+              aria-pressed={voice.isListening}
+              aria-label={voice.isListening ? 'Stop voice input' : 'Start voice input'}
+            >
+              {voice.isListening ? '⏹ Listening…' : '🎤 Voice'}
+            </button>
+          )}
           {isSending ? (
             <button type="button" className="btn btn-secondary" onClick={stop}>
               Stop

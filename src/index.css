@@ -5,6 +5,7 @@
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
+  --danger: #dc2626;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
@@ -38,6 +39,7 @@
     --border: #2e303a;
     --code-bg: #1f2028;
     --accent: #c084fc;
+    --danger: #f87171;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);
@@ -526,4 +528,30 @@ ul {
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-h);
+}
+
+/* --- Voice input --- */
+.voice-interim {
+  margin: 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text);
+}
+
+.voice-btn.listening {
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-btn.listening {
+    animation: none;
+  }
 }
